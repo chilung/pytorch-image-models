@@ -349,7 +349,7 @@ Model validation results can be found in the [documentation](https://rwightman.g
 
 ## Getting Started (Documentation)
 
-My current [documentation](https://rwightman.github.io/pytorch-image-models/) for `timm` covers the basics.
+***CHILUNG STUDY*** My current [documentation](https://rwightman.github.io/pytorch-image-models/) for `timm` covers the basics.
 
 [timmdocs](https://fastai.github.io/timmdocs/) is quickly becoming a much more comprehensive set of documentation for `timm`. A big thanks to [Aman Arora](https://github.com/amaarora) for his efforts creating timmdocs.
 
