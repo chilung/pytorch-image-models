@@ -351,9 +351,9 @@ Model validation results can be found in the [documentation](https://rwightman.g
 
 ***CHILUNG STUDY*** My current [documentation](https://rwightman.github.io/pytorch-image-models/) for `timm` covers the basics.
 
-[timmdocs](https://fastai.github.io/timmdocs/) is quickly becoming a much more comprehensive set of documentation for `timm`. A big thanks to [Aman Arora](https://github.com/amaarora) for his efforts creating timmdocs.
+***CHILUNG STUDY*** [timmdocs](https://fastai.github.io/timmdocs/) is quickly becoming a much more comprehensive set of documentation for `timm`. A big thanks to [Aman Arora](https://github.com/amaarora) for his efforts creating timmdocs.
 
-[paperswithcode](https://paperswithcode.com/lib/timm) is a good resource for browsing the models within `timm`.
+***CHILUNG STUDY*** [paperswithcode](https://paperswithcode.com/lib/timm) is a good resource for browsing the models within `timm`.
 
 ## Train, Validation, Inference Scripts
 
