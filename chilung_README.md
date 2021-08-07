@@ -8,3 +8,5 @@
 
 ### Inference Command
  python inference.py ../Dataset/imagenet/ILSVRC/Data/CLS-LOC --model vit_tiny_r_s16_p8_224 --pretrained
+ python inference.py ../Dataset/imagenet/ILSVRC/Data/CLS-LOC --model vit_tiny_r_s16_p8_224 --pretrained --num-gpu 4 --workers 8
+
