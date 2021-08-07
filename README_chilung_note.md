@@ -12,7 +12,8 @@ python inference.py ../Dataset/imagenet/ILSVRC/Data/CLS-LOC --model vit_tiny_r_s
 
 # Establish Vision Transformer Baseline
 ## Ref 1
-Training data-efficient image transformers & distillation through attention)
+Training data-efficient image transformers & distillation through attention
+
 Top-1 Acc.
 ```
 ViT-B/16: ImageNet top-1 77.9%
