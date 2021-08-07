@@ -6,5 +6,5 @@
 ### Train Command
 ./distributed_train.sh 4 ../Dataset/imagenet/ILSVRC/Data/CLS-LOC/ --model vit_tiny_r_s16_p8_224
 
-### Eval Command
-./distributed_train.sh 1 ../Dataset/imagenet/ILSVRC/Data/CLS-LOC --model vit_tiny_r_s16_p8_224 --pretrained  --eval-only
+### Inference Command
+ python inference.py ../Dataset/imagenet/ILSVRC/Data/CLS-LOC --model vit_tiny_r_s16_p8_224 --pretrained
