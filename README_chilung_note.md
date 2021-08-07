@@ -15,8 +15,11 @@ python inference.py ../Dataset/imagenet/ILSVRC/Data/CLS-LOC --model vit_tiny_r_s
 
 ## Top-1 Acc.
 ViT-B/16: ImageNet top-1 77.9%
+
 ViT-B/32: ImageNet top-1 73.4%
+
 ViT-L/16: ImageNet top-1 76.5%
+
 ViT-L/32: ImageNet top-1 71.2%
 
 ## Train Hyper-Parameter for ViT-B
