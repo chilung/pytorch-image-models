@@ -24,6 +24,7 @@ def create_scheduler(args, optimizer):
 
     lr_scheduler = None
     if args.sched == 'cosine':
+        print('****************************** CHILUNG MESSAGE: cosine ********************************')
         lr_scheduler = CosineLRScheduler(
             optimizer,
             t_initial=num_epochs,
