@@ -5,6 +5,9 @@ from .coat import *
 from .convit import *
 from .cspnet import *
 from .densenet import *
+# BEGIN added by Chilung for experiment of diversify ViT feature map
+from .divervit import *
+# END added by Chilung for experiment of diversify ViT feature map
 from .dla import *
 from .dpn import *
 from .efficientnet import *
