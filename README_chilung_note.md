@@ -48,3 +48,4 @@ Epochs 300, Batch size 64, Optimizer AdamW, learning rate 0.003, Learning rate d
 ```
 result file:
 
+# The feature map in ViT tends to become identical in deeper layers
