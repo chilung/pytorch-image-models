@@ -53,6 +53,7 @@ result file:
 Check the similarity of feature maps between two consecutive layers while in training phase.
 ## model class DiverViT for this experiment
 ### source code modification
-
+1. source code path: ../timm/models/divervit.py
+2. supported configuration: diver_vit_base_patch16_224
 ### training command
 ./distributed_train.sh 4 ../Dataset/imagenet/ILSVRC/Data/CLS-LOC/ --model diver_vit_base_patch16_224 --epochs 300 --batch-size 4 --opt 'AdamW' --lr 0.003 --sched 'cosine' --weight-decay 0.3 --warmup-epochs 5 --smoothing 0.1 --drop 0.1 --workers 1
