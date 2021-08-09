@@ -51,5 +51,8 @@ result file:
 # The feature map in ViT tends to become identical in deeper layers
 ## Evidence
 Check the similarity of feature maps between two consecutive layers while in training phase.
-## A new model class DiverViT for this experiment
+## model class DiverViT for this experiment
+### source code modification
+
+### training command
 ./distributed_train.sh 4 ../Dataset/imagenet/ILSVRC/Data/CLS-LOC/ --model diver_vit_base_patch16_224 --epochs 300 --batch-size 4 --opt 'AdamW' --lr 0.003 --sched 'cosine' --weight-decay 0.3 --warmup-epochs 5 --smoothing 0.1 --drop 0.1 --workers 1
