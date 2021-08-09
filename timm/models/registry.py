@@ -26,6 +26,8 @@ def register_model(fn):
 
     # add model to __all__ in module
     model_name = fn.__name__
+    print(model_name)
+    
     if hasattr(mod, '__all__'):
         mod.__all__.append(model_name)
     else:
