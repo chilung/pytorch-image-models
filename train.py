@@ -692,11 +692,9 @@ def train_one_epoch(
                 losses_m.update(reduced_loss.item(), input.size(0))
 
             if args.local_rank == 0:
+                now = datetime.now()
+                current_time = now.strftime("%H:%M:%S")
                 _logger.info(
-
-                    now = datetime.now()
-                    current_time = now.strftime("%H:%M:%S")
-
                     'Walltime: {}  '
                     'Train: {} [{:>4d}/{} ({:>3.0f}%)]  '
                     'Loss: {loss.val:>9.6f} ({loss.avg:>6.4f})  '
