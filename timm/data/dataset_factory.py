@@ -1,7 +1,7 @@
 import os
 
 from .dataset import IterableImageDataset, ImageDataset
-
+from .lmdb_dataset import ImageFolderLMDB
 
 def _search_split(root, split):
     # look for sub-folder with name of split in root and use that if it exists
