@@ -16,7 +16,7 @@ def _search_split(root, split):
     return root
 
 
-def create_dataset(name, root, split='validation', search_split=True, is_training=False, batch_size=None, **kwargs):
+def create_dataset(name, root, split='validation', search_split=True, is_training=False, batch_size=None, use_lmdb=False, **kwargs):
     name = name.lower()
     if name.startswith('tfds'):
         ds = IterableImageDataset(
@@ -26,5 +26,9 @@ def create_dataset(name, root, split='validation', search_split=True, is_trainin
         kwargs.pop('repeats', 0)  # FIXME currently only Iterable dataset support the repeat multiplier
         if search_split and os.path.isdir(root):
             root = _search_split(root, split)
-        ds = ImageDataset(root, parser=name, **kwargs)
+        print('============== CHILUNG MESSAGE, root: {} ================='.format(root))
+        if use_lmdb:
+            ds = ImageFolderLMDB(root)
+        else:
+            ds = ImageDataset(root, parser=name, **kwargs)
     return ds
