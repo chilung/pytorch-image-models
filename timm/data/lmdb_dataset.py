@@ -25,8 +25,6 @@ class ImageFolderLMDB(Dataset):
     """Lmdb dataset."""
 
     def __init__(self, db_path, transform=None, target_transform=None):
-        print("CHILUNG: db_path: {}".format(db_path))
-        print("CHILUNG: isdir: {}".format(os.path.isdir(db_path)))
         self.db_path = db_path
         self.env = lmdb.open(db_path,
                              subdir=os.path.isdir(db_path),
@@ -34,7 +32,6 @@ class ImageFolderLMDB(Dataset):
                              lock=False,
                              readahead=False,
                              meminit=False)
-        print("CHILUNG: after lmdb open")
         with self.env.begin(write=False) as txn:
             self.length = pa.deserialize(txn.get(b'__len__'))
             self.keys = pa.deserialize(txn.get(b'__keys__'))
@@ -94,8 +91,6 @@ def dumps_pyarrow(obj):
 def folder2lmdb(src_dir, dst_dir, name="train", write_frequency=5000):
     """Convert torchvision's `ImageFolder` to lmdb dataset."""
     directory = os.path.expanduser(os.path.join(src_dir, name))
-    print("Loading dataset from %s" % directory)
-    print("### CHILUNG ###\ndirectory: {}".format(directory))
     dataset = ImageFolder(directory, loader=raw_reader)
     data_loader = DataLoader(dataset, num_workers=16, collate_fn=lambda x: x)
 
@@ -140,8 +135,6 @@ if __name__ == "__main__":
     parser.add_argument('--dst_dir', help='dst dir')
     args = parser.parse_args()
     
-    print("### CHILUNG ###\nsrc_dir: {}, dst_dir: {}".format(args.src_dir, args.dst_dir))
-
     for name in ['val', 'train']:
         folder2lmdb(args.src_dir, args.dst_dir, name=name)
 
