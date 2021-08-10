@@ -236,7 +236,6 @@ class DiverVisionTransformer(nn.Module):
         x = self.blocks(x)
         x = self.norm(x)
         if self.dist_token is None:
-            print(self.pre_logits(x[:, 0]).size())
             return self.pre_logits(x[:, 0])
         else:
             return x[:, 0], x[:, 1]
