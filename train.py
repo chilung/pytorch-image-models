@@ -693,12 +693,18 @@ def train_one_epoch(
 
             if args.local_rank == 0:
                 _logger.info(
+
+                    now = datetime.now()
+                    current_time = now.strftime("%H:%M:%S")
+
+                    'Walltime: {}  '
                     'Train: {} [{:>4d}/{} ({:>3.0f}%)]  '
                     'Loss: {loss.val:>9.6f} ({loss.avg:>6.4f})  '
                     'Time: {batch_time.val:.3f}s, {rate:>7.2f}/s  '
                     '({batch_time.avg:.3f}s, {rate_avg:>7.2f}/s)  '
                     'LR: {lr:.3e}  '
                     'Data: {data_time.val:.3f} ({data_time.avg:.3f})'.format(
+                        current_time,
                         epoch,
                         batch_idx, len(loader),
                         100. * batch_idx / last_idx,
