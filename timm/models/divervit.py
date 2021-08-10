@@ -50,7 +50,6 @@ def _cfg(url='', **kwargs):
         **kwargs
     }
 
-vit_ultra_tiny_patch32_d12_224
 default_cfgs = {
     'diver_vit_ultra_tiny_patch32_d12_224': _cfg(
         url=''),
