@@ -441,7 +441,7 @@ def diver_vit_ultra_tiny_patch32_d12_224(pretrained=False, **kwargs):
     """ ViT-Tiny (Vit-Ti/16)
     """
     model_kwargs = dict(patch_size=32, embed_dim=96, depth=12, num_heads=3, **kwargs)
-    model = _create_vision_transformer('diver_vit_ultra_tiny_patch32_d12_224', pretrained=pretrained, **model_kwargs)
+    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch32_d12_224', pretrained=pretrained, **model_kwargs)
     return model
 
 @register_model
@@ -449,7 +449,7 @@ def diver_vit_ultra_tiny_patch32_d16_224(pretrained=False, **kwargs):
     """ ViT-Tiny (Vit-Ti/16)
     """
     model_kwargs = dict(patch_size=32, embed_dim=96, depth=16, num_heads=3, **kwargs)
-    model = _create_vision_transformer('diver_vit_ultra_tiny_patch32_d16_224', pretrained=pretrained, **model_kwargs)
+    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch32_d16_224', pretrained=pretrained, **model_kwargs)
     return model
 
 @register_model
@@ -457,7 +457,7 @@ def diver_vit_ultra_tiny_patch32_d24_224(pretrained=False, **kwargs):
     """ ViT-Tiny (Vit-Ti/16)
     """
     model_kwargs = dict(patch_size=32, embed_dim=96, depth=24, num_heads=3, **kwargs)
-    model = _create_vision_transformer('diver_vit_ultra_tiny_patch32_d24_224', pretrained=pretrained, **model_kwargs)
+    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch32_d24_224', pretrained=pretrained, **model_kwargs)
     return model
 
 @register_model
@@ -465,7 +465,7 @@ def diver_vit_ultra_tiny_patch32_d32_224(pretrained=False, **kwargs):
     """ ViT-Tiny (Vit-Ti/16)
     """
     model_kwargs = dict(patch_size=32, embed_dim=96, depth=32, num_heads=3, **kwargs)
-    model = _create_vision_transformer('diver_vit_ultra_tiny_patch32_d32_224', pretrained=pretrained, **model_kwargs)
+    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch32_d32_224', pretrained=pretrained, **model_kwargs)
     return model
 
 @register_model
