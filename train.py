@@ -474,9 +474,9 @@ def main():
     dataset_train = create_dataset(
         args.dataset,
         root=args.data_dir, split=args.train_split, is_training=True,
-        batch_size=args.batch_size, repeats=args.epoch_repeats)
+        batch_size=args.batch_size, repeats=args.epoch_repeats, use_lmdb=args.use_lmdb)
     dataset_eval = create_dataset(
-        args.dataset, root=args.data_dir, split=args.val_split, is_training=False, batch_size=args.batch_size)
+        args.dataset, root=args.data_dir, split=args.val_split, is_training=False, batch_size=args.batch_size, use_lmdb=args.use_lmdb)
 
     # setup mixup / cutmix
     collate_fn = None
