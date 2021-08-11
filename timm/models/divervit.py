@@ -51,6 +51,8 @@ def _cfg(url='', **kwargs):
     }
 
 default_cfgs = {
+    'diver_vit_ultra_tiny_patch16_d12_224': _cfg(
+        url=''),
     'diver_vit_ultra_tiny_patch32_d12_224': _cfg(
         url=''),
     'diver_vit_ultra_tiny_patch32_d16_224': _cfg(
@@ -433,6 +435,14 @@ def _create_diver_vision_transformer(variant, pretrained=False, default_cfg=None
         pretrained_filter_fn=diver_checkpoint_filter_fn,
         pretrained_custom_load='npz' in default_cfg['url'],
         **kwargs)
+    return model
+
+@register_model
+def diver_vit_ultra_tiny_patch16_d12_224(pretrained=False, **kwargs):
+    """ ViT-Tiny (Vit-Ti/16)
+    """
+    model_kwargs = dict(patch_size=16, embed_dim=96, depth=12, num_heads=3, **kwargs)
+    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch32_d12_224', pretrained=pretrained, **model_kwargs)
     return model
 
 @register_model
