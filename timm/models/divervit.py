@@ -38,7 +38,7 @@ from .layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_normal_
 from .registry import register_model
 
 _logger = logging.getLogger(__name__)
-
+forward_run = 0
 
 def _cfg(url='', **kwargs):
     return {
@@ -89,6 +89,9 @@ class DiverAttention(nn.Module):
         attn = attn.softmax(dim=-1)
         attn = self.attn_drop(attn)
 
+        // Chilung Add Variable
+        forward_run += 1
+        
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
         x = self.proj(x)
         x = self.proj_drop(x)
