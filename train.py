@@ -37,6 +37,8 @@ from timm.optim import create_optimizer_v2, optimizer_kwargs
 from timm.scheduler import create_scheduler
 from timm.utils import ApexScaler, NativeScaler
 
+from timm.models.divervit import forward_run
+
 try:
     from apex import amp
     from apex.parallel import DistributedDataParallel as ApexDDP
@@ -557,6 +559,8 @@ def main():
         train_loss_fn = nn.CrossEntropyLoss().cuda()
     validate_loss_fn = nn.CrossEntropyLoss().cuda()
 
+    print('================== CHILUNG Attention Map: {}'.format(forward_run))
+    
     # setup checkpoint saver and eval metric tracking
     eval_metric = args.eval_metric
     best_metric = None
@@ -582,6 +586,8 @@ def main():
 
     try:
         for epoch in range(start_epoch, num_epochs):
+            print('================== CHILUNG Attention Map: {}'.format(forward_run))
+            
             if args.distributed and hasattr(loader_train.sampler, 'set_epoch'):
                 loader_train.sampler.set_epoch(epoch)
 
