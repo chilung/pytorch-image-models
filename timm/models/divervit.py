@@ -75,6 +75,8 @@ default_cfgs = {
         url=''),
     'diver_vit_tiny_patch16_d12_h96_224': _cfg(
         url=''),
+    'diver_vit_tiny_patch16_d12_h192_224': _cfg(
+        url=''),
 }
 
 
@@ -556,5 +558,13 @@ def diver_vit_tiny_patch16_d12_h96_224(pretrained=False, **kwargs):
     """
     model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=96, **kwargs)
     model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h96_224', pretrained=pretrained, **model_kwargs)
+    return model
+
+@register_model
+def diver_vit_tiny_patch16_d12_h192_224(pretrained=False, **kwargs):
+    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
+    """
+    model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=192, **kwargs)
+    model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h192_224', pretrained=pretrained, **model_kwargs)
     return model
 
