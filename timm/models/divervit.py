@@ -51,27 +51,25 @@ def _cfg(url='', **kwargs):
     }
 
 default_cfgs = {
-    'diver_vit_ultra_tiny_patch16_d12_224': _cfg(
+    'diver_vit_ultra_tiny_patch16_d12_h3_224': _cfg(
         url=''),
-    'diver_vit_ultra_tiny_patch32_d12_224': _cfg(
+    'diver_vit_ultra_tiny_patch16_d12_h6_224': _cfg(
         url=''),
-    'diver_vit_ultra_tiny_patch32_d16_224': _cfg(
+    'diver_vit_ultra_tiny_patch16_d12_h12_224': _cfg(
         url=''),
-    'diver_vit_ultra_tiny_patch32_d24_224': _cfg(
+    'diver_vit_ultra_tiny_patch16_d12_h24_224': _cfg(
         url=''),
-    'diver_vit_ultra_tiny_patch32_d32_224': _cfg(
+    'diver_vit_ultra_tiny_patch16_d12_h48_224': _cfg(
         url=''),
-    'diver_vit_base_patch16_224': _cfg(
-        url=''),
-    'diver_vit_base_patch24_224': _cfg(
+    'diver_vit_ultra_tiny_patch16_d12_h96_224': _cfg(
         url=''),
 }
 
 
 class DiverAttention(nn.Module):
+    
     def __init__(self, dim, num_heads=8, qkv_bias=False, attn_drop=0., proj_drop=0.):
         super().__init__()
-        forward_run = 0
         
         self.num_heads = num_heads
         head_dim = dim // num_heads
@@ -83,6 +81,8 @@ class DiverAttention(nn.Module):
         self.proj_drop = nn.Dropout(proj_drop)
 
     def forward(self, x):
+        global forward_run
+        
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)
@@ -92,7 +92,8 @@ class DiverAttention(nn.Module):
         attn = self.attn_drop(attn)
 
         # Chilung Add Variable
-        forward_run += 1
+        # forward_run += 1
+        # print('CHILUNG forward: {}'.format(forward_run))
         
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
         x = self.proj(x)
@@ -442,63 +443,106 @@ def _create_diver_vision_transformer(variant, pretrained=False, default_cfg=None
         **kwargs)
     return model
 
+'''
+Configuration Definition
+ultra tiny - embedded dimension: 96
+tiny - embedded dimension: 192
+base - embedded dimension: 786
+'''
+
 @register_model
-def diver_vit_ultra_tiny_patch16_d12_224(pretrained=False, **kwargs):
-    """ ViT-Tiny (Vit-Ti/16)
+def diver_vit_ultra_tiny_patch16_d12_h3_224(pretrained=False, **kwargs):
+    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
     """
     model_kwargs = dict(patch_size=16, embed_dim=96, depth=12, num_heads=3, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch32_d12_224', pretrained=pretrained, **model_kwargs)
+    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch16_d12_h3_224', pretrained=pretrained, **model_kwargs)
     return model
 
 @register_model
-def diver_vit_ultra_tiny_patch32_d12_224(pretrained=False, **kwargs):
-    """ ViT-Tiny (Vit-Ti/16)
+def diver_vit_ultra_tiny_patch16_d12_h6_224(pretrained=False, **kwargs):
+    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
     """
-    model_kwargs = dict(patch_size=32, embed_dim=96, depth=12, num_heads=3, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch32_d12_224', pretrained=pretrained, **model_kwargs)
+    model_kwargs = dict(patch_size=16, embed_dim=96, depth=12, num_heads=6, **kwargs)
+    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch16_d12_h6_224', pretrained=pretrained, **model_kwargs)
     return model
 
 @register_model
-def diver_vit_ultra_tiny_patch32_d16_224(pretrained=False, **kwargs):
-    """ ViT-Tiny (Vit-Ti/16)
+def diver_vit_ultra_tiny_patch16_d12_h12_224(pretrained=False, **kwargs):
+    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
     """
-    model_kwargs = dict(patch_size=32, embed_dim=96, depth=16, num_heads=3, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch32_d16_224', pretrained=pretrained, **model_kwargs)
+    model_kwargs = dict(patch_size=16, embed_dim=96, depth=12, num_heads=12, **kwargs)
+    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch16_d12_h12_224', pretrained=pretrained, **model_kwargs)
     return model
 
 @register_model
-def diver_vit_ultra_tiny_patch32_d24_224(pretrained=False, **kwargs):
-    """ ViT-Tiny (Vit-Ti/16)
+def diver_vit_ultra_tiny_patch16_d12_h24_224(pretrained=False, **kwargs):
+    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
     """
-    model_kwargs = dict(patch_size=32, embed_dim=96, depth=24, num_heads=3, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch32_d24_224', pretrained=pretrained, **model_kwargs)
+    model_kwargs = dict(patch_size=16, embed_dim=96, depth=12, num_heads=24, **kwargs)
+    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch16_d12_h24_224', pretrained=pretrained, **model_kwargs)
     return model
 
 @register_model
-def diver_vit_ultra_tiny_patch32_d32_224(pretrained=False, **kwargs):
-    """ ViT-Tiny (Vit-Ti/16)
+def diver_vit_ultra_tiny_patch16_d12_h48_224(pretrained=False, **kwargs):
+    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
     """
-    model_kwargs = dict(patch_size=32, embed_dim=96, depth=32, num_heads=3, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch32_d32_224', pretrained=pretrained, **model_kwargs)
+    model_kwargs = dict(patch_size=16, embed_dim=96, depth=12, num_heads=48, **kwargs)
+    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch16_d12_h48_224', pretrained=pretrained, **model_kwargs)
     return model
 
 @register_model
-def diver_vit_base_patch16_224(pretrained=False, **kwargs):
-    """ ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
-    ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
+def diver_vit_ultra_tiny_patch16_d12_h96_224(pretrained=False, **kwargs):
+    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
     """
-    print('********************* This is the CHILUNG MESSAGE in DiverViT ***********************')
-    model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_base_patch16_224', pretrained=pretrained, **model_kwargs)
+    model_kwargs = dict(patch_size=16, embed_dim=96, depth=12, num_heads=96, **kwargs)
+    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch16_d12_h96_224', pretrained=pretrained, **model_kwargs)
     return model
 
 @register_model
-def diver_vit_base_patch24_224(pretrained=False, **kwargs):
-    """ ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
-    ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
+def diver_vit_tiny_patch16_d12_h3_224(pretrained=False, **kwargs):
+    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
     """
-    print('********************* This is the CHILUNG MESSAGE in DiverViT ***********************')
-    model_kwargs = dict(patch_size=16, embed_dim=768, depth=24, num_heads=12, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_base_patch24_224', pretrained=pretrained, **model_kwargs)
+    model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=3, **kwargs)
+    model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h3_224', pretrained=pretrained, **model_kwargs)
+    return model
+
+@register_model
+def diver_vit_tiny_patch16_d12_h6_224(pretrained=False, **kwargs):
+    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
+    """
+    model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=6, **kwargs)
+    model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h6_224', pretrained=pretrained, **model_kwargs)
+    return model
+
+@register_model
+def diver_vit_tiny_patch16_d12_h12_224(pretrained=False, **kwargs):
+    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
+    """
+    model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=12, **kwargs)
+    model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h12_224', pretrained=pretrained, **model_kwargs)
+    return model
+
+@register_model
+def diver_vit_tiny_patch16_d12_h24_224(pretrained=False, **kwargs):
+    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
+    """
+    model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=24, **kwargs)
+    model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h24_224', pretrained=pretrained, **model_kwargs)
+    return model
+
+@register_model
+def diver_vit_tiny_patch16_d12_h48_224(pretrained=False, **kwargs):
+    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
+    """
+    model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=48, **kwargs)
+    model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h48_224', pretrained=pretrained, **model_kwargs)
+    return model
+
+@register_model
+def diver_vit_tiny_patch16_d12_h96_224(pretrained=False, **kwargs):
+    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
+    """
+    model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=96, **kwargs)
+    model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h96_224', pretrained=pretrained, **model_kwargs)
     return model
 
