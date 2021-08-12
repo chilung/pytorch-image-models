@@ -71,6 +71,8 @@ default_cfgs = {
 class DiverAttention(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, attn_drop=0., proj_drop=0.):
         super().__init__()
+        forward_run = 0
+        
         self.num_heads = num_heads
         head_dim = dim // num_heads
         self.scale = head_dim ** -0.5
@@ -89,7 +91,7 @@ class DiverAttention(nn.Module):
         attn = attn.softmax(dim=-1)
         attn = self.attn_drop(attn)
 
-        // Chilung Add Variable
+        # Chilung Add Variable
         forward_run += 1
         
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
