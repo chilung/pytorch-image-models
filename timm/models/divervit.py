@@ -63,6 +63,18 @@ default_cfgs = {
         url=''),
     'diver_vit_ultra_tiny_patch16_d12_h96_224': _cfg(
         url=''),
+    'diver_vit_tiny_patch16_d12_h3_224': _cfg(
+        url=''),
+    'diver_vit_tiny_patch16_d12_h6_224': _cfg(
+        url=''),
+    'diver_vit_tiny_patch16_d12_h12_224': _cfg(
+        url=''),
+    'diver_vit_tiny_patch16_d12_h24_224': _cfg(
+        url=''),
+    'diver_vit_tiny_patch16_d12_h48_224': _cfg(
+        url=''),
+    'diver_vit_tiny_patch16_d12_h96_224': _cfg(
+        url=''),
 }
 
 
