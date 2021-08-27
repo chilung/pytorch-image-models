@@ -38,7 +38,7 @@ from .layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_normal_
 from .registry import register_model
 
 _logger = logging.getLogger(__name__)
-forward_run = 0
+
 
 def _cfg(url='', **kwargs):
     return {
@@ -49,6 +49,7 @@ def _cfg(url='', **kwargs):
         'first_conv': 'patch_embed.proj', 'classifier': 'head',
         **kwargs
     }
+
 
 default_cfgs = {
     'diver_vit_ultra_tiny_patch16_d12_h3_224': _cfg(
@@ -79,12 +80,9 @@ default_cfgs = {
         url=''),
 }
 
-
 class DiverAttention(nn.Module):
-    
     def __init__(self, dim, num_heads=8, qkv_bias=False, attn_drop=0., proj_drop=0.):
         super().__init__()
-        
         self.num_heads = num_heads
         head_dim = dim // num_heads
         self.scale = head_dim ** -0.5
@@ -95,8 +93,6 @@ class DiverAttention(nn.Module):
         self.proj_drop = nn.Dropout(proj_drop)
 
     def forward(self, x):
-        global forward_run
-        
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)
@@ -105,10 +101,6 @@ class DiverAttention(nn.Module):
         attn = attn.softmax(dim=-1)
         attn = self.attn_drop(attn)
 
-        # Chilung Add Variable
-        # forward_run += 1
-        # print('CHILUNG forward: {}'.format(forward_run))
-        
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
         x = self.proj(x)
         x = self.proj_drop(x)
@@ -218,18 +210,18 @@ class DiverVisionTransformer(nn.Module):
             trunc_normal_(self.dist_token, std=.02)
         if mode.startswith('jax'):
             # leave cls token as zeros to match jax impl
-            named_apply(partial(_diver_init_vit_weights, head_bias=head_bias, jax_impl=True), self)
+            named_apply(partial(_init_vit_weights, head_bias=head_bias, jax_impl=True), self)
         else:
             trunc_normal_(self.cls_token, std=.02)
-            self.apply(_diver_init_vit_weights)
+            self.apply(_init_vit_weights)
 
     def _init_weights(self, m):
         # this fn left here for compat with downstream users
-        _diver_init_vit_weights(m)
+        _init_vit_weights(m)
 
     @torch.jit.ignore()
     def load_pretrained(self, checkpoint_path, prefix=''):
-        _diver_load_weights(self, checkpoint_path, prefix)
+        _load_weights(self, checkpoint_path, prefix)
 
     @torch.jit.ignore
     def no_weight_decay(self):
@@ -273,11 +265,10 @@ class DiverVisionTransformer(nn.Module):
                 return (x + x_dist) / 2
         else:
             x = self.head(x)
-        # print(x.size())
         return x
 
 
-def _diver_init_vit_weights(module: nn.Module, name: str = '', head_bias: float = 0., jax_impl: bool = False):
+def _init_vit_weights(module: nn.Module, name: str = '', head_bias: float = 0., jax_impl: bool = False):
     """ ViT weight initialization
     * When called without n, head_bias, jax_impl args it will behave exactly the same
       as my original init for compatibility with prev hparam / downstream use cases (ie DeiT).
@@ -313,7 +304,7 @@ def _diver_init_vit_weights(module: nn.Module, name: str = '', head_bias: float 
 
 
 @torch.no_grad()
-def _diver_load_weights(model: DiverVisionTransformer, checkpoint_path: str, prefix: str = ''):
+def _load_weights(model: DiverVisionTransformer, checkpoint_path: str, prefix: str = ''):
     """ Load weights from .npz checkpoints for official Google Brain Flax implementation
     """
     import numpy as np
@@ -392,7 +383,7 @@ def _diver_load_weights(model: DiverVisionTransformer, checkpoint_path: str, pre
         block.norm2.bias.copy_(_n2p(w[f'{block_prefix}LayerNorm_2/bias']))
 
 
-def diver_resize_pos_embed(posemb, posemb_new, num_tokens=1, gs_new=()):
+def resize_pos_embed(posemb, posemb_new, num_tokens=1, gs_new=()):
     # Rescale the grid of position embeddings when loading from state_dict. Adapted from
     # https://github.com/google-research/vision_transformer/blob/00883dd691c63a6830751563748663526e811cee/vit_jax/checkpoint.py#L224
     _logger.info('Resized position embedding: %s to %s', posemb.shape, posemb_new.shape)
@@ -414,7 +405,7 @@ def diver_resize_pos_embed(posemb, posemb_new, num_tokens=1, gs_new=()):
     return posemb
 
 
-def diver_checkpoint_filter_fn(state_dict, model):
+def checkpoint_filter_fn(state_dict, model):
     """ convert patch embedding weight from manual patchify + linear proj to conv"""
     out_dict = {}
     if 'model' in state_dict:
@@ -427,13 +418,13 @@ def diver_checkpoint_filter_fn(state_dict, model):
             v = v.reshape(O, -1, H, W)
         elif k == 'pos_embed' and v.shape != model.pos_embed.shape:
             # To resize pos embedding when using model at different size from pretrained weights
-            v = diver_resize_pos_embed(
+            v = resize_pos_embed(
                 v, model.pos_embed, getattr(model, 'num_tokens', 1), model.patch_embed.grid_size)
         out_dict[k] = v
     return out_dict
 
 
-def _create_diver_vision_transformer(variant, pretrained=False, default_cfg=None, **kwargs):
+def _create_divert_vision_transformer(variant, pretrained=False, default_cfg=None, **kwargs):
     default_cfg = default_cfg or default_cfgs[variant]
     if kwargs.get('features_only', None):
         raise RuntimeError('features_only not implemented for Vision Transformer models.')
@@ -452,10 +443,11 @@ def _create_diver_vision_transformer(variant, pretrained=False, default_cfg=None
         DiverVisionTransformer, variant, pretrained,
         default_cfg=default_cfg,
         representation_size=repr_size,
-        pretrained_filter_fn=diver_checkpoint_filter_fn,
+        pretrained_filter_fn=checkpoint_filter_fn,
         pretrained_custom_load='npz' in default_cfg['url'],
         **kwargs)
     return model
+
 
 '''
 Configuration Definition

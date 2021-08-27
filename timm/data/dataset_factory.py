@@ -26,7 +26,7 @@ def create_dataset(name, root, split='validation', search_split=True, is_trainin
         kwargs.pop('repeats', 0)  # FIXME currently only Iterable dataset support the repeat multiplier
         if search_split and os.path.isdir(root):
             root = _search_split(root, split)
-        print('============== CHILUNG MESSAGE, root: {} ================='.format(root))
+        # print('============== CHILUNG MESSAGE, root: {} ================='.format(root))
         if use_lmdb:
             ds = ImageFolderLMDB(root)
         else:

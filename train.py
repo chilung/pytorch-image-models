@@ -559,8 +559,31 @@ def main():
         train_loss_fn = nn.CrossEntropyLoss().cuda()
     validate_loss_fn = nn.CrossEntropyLoss().cuda()
 
-    # global forward_run
-    # print('================== CHILUNG Attention Map: {}'.format(timm.models.divervit.forward_run))
+    global stat
+    timm.models.divervit.stat['whole'] = {}
+    timm.models.divervit.stat['whole']['train'] = 0
+    timm.models.divervit.stat['whole']['validate'] = 0
+    timm.models.divervit.stat['train'] = {}
+    timm.models.divervit.stat['train']['forward'] = 0
+    timm.models.divervit.stat['validate'] = {}
+    timm.models.divervit.stat['validate']['inference'] = 0
+    timm.models.divervit.stat['validate']['total'] = 0
+    timm.models.divervit.stat['attn'] = {}
+    timm.models.divervit.stat['attn']['qkv'] = 0
+    timm.models.divervit.stat['attn']['qkT'] = 0
+    timm.models.divervit.stat['attn']['softmax'] = 0
+    timm.models.divervit.stat['attn']['av'] = 0
+    timm.models.divervit.stat['attn']['proj'] = 0
+    timm.models.divervit.stat['attn']['total'] = 0
+    timm.models.divervit.stat['backward'] = {}
+    timm.models.divervit.stat['backward']['loss_scaler'] = 0
+    timm.models.divervit.stat['backward']['backward'] = 0
+    timm.models.divervit.stat['backward']['dispatch_clip_grad'] = 0
+    timm.models.divervit.stat['backward']['optimizer_step'] = 0
+    timm.models.divervit.stat['backward']['total'] = 0
+
+
+    # print('================== CHILUNG Stat Initialization: {}'.format(timm.models.divervit.stat))
     
     # setup checkpoint saver and eval metric tracking
     eval_metric = args.eval_metric
@@ -592,17 +615,21 @@ def main():
             if args.distributed and hasattr(loader_train.sampler, 'set_epoch'):
                 loader_train.sampler.set_epoch(epoch)
 
+            start = time.time()
             train_metrics = train_one_epoch(
                 epoch, model, loader_train, optimizer, train_loss_fn, args,
                 lr_scheduler=lr_scheduler, saver=saver, output_dir=output_dir,
                 amp_autocast=amp_autocast, loss_scaler=loss_scaler, model_ema=model_ema, mixup_fn=mixup_fn)
+            timm.models.divervit.stat['whole']['train'] += time.time() - start
 
             if args.distributed and args.dist_bn in ('broadcast', 'reduce'):
                 if args.local_rank == 0:
                     _logger.info("Distributing BatchNorm running means and vars")
                 distribute_bn(model, args.world_size, args.dist_bn == 'reduce')
 
+            start = time.time()
             eval_metrics = validate(model, loader_eval, validate_loss_fn, args, amp_autocast=amp_autocast)
+            timm.models.divervit.stat['whole']['validate'] += time.time() - start
 
             if model_ema is not None and not args.model_ema_force_cpu:
                 if args.distributed and args.dist_bn in ('broadcast', 'reduce'):
@@ -627,6 +654,8 @@ def main():
 
     except KeyboardInterrupt:
         pass
+    
+    print('================== CHILUNG Stat: {}'.format(timm.models.divervit.stat))
     if best_metric is not None:
         _logger.info('*** Best metric: {0} (epoch {1})'.format(best_metric, best_epoch))
 
@@ -636,7 +665,7 @@ def train_one_epoch(
         lr_scheduler=None, saver=None, output_dir=None, amp_autocast=suppress,
         loss_scaler=None, model_ema=None, mixup_fn=None):
 
-    global forward_run
+    global stat
 
     if args.mixup_off_epoch and epoch >= args.mixup_off_epoch:
         if args.prefetcher and loader.mixup_enabled:
@@ -655,7 +684,7 @@ def train_one_epoch(
     last_idx = len(loader) - 1
     num_updates = epoch * len(loader)
     for batch_idx, (input, target) in enumerate(loader):
-        # print('================== CHILUNG Attention Map: {}'.format(timm.models.divervit.forward_run))
+        #print('================== CHILUNG Attention Map: {}'.format(timm.models.divervit.stat))
         
         last_batch = batch_idx == last_idx
         data_time_m.update(time.time() - end)
@@ -666,27 +695,38 @@ def train_one_epoch(
         if args.channels_last:
             input = input.contiguous(memory_format=torch.channels_last)
 
+        start = time.time()
         with amp_autocast():
             output = model(input)
             loss = loss_fn(output, target)
+        timm.models.divervit.stat['train']['forward'] += time.time() - start
 
         if not args.distributed:
             losses_m.update(loss.item(), input.size(0))
 
+        start_1 = time.time()
         optimizer.zero_grad()
         if loss_scaler is not None:
+            timm.models.divervit.stat['backward']['loss_scaler'] += 1
             loss_scaler(
                 loss, optimizer,
                 clip_grad=args.clip_grad, clip_mode=args.clip_mode,
                 parameters=model_parameters(model, exclude_head='agc' in args.clip_mode),
                 create_graph=second_order)
         else:
+            start_1_1 = time.time()
             loss.backward(create_graph=second_order)
+            timm.models.divervit.stat['backward']['backward'] += time.time() - start_1_1
+            start_1_2 = time.time()
             if args.clip_grad is not None:
                 dispatch_clip_grad(
                     model_parameters(model, exclude_head='agc' in args.clip_mode),
                     value=args.clip_grad, mode=args.clip_mode)
+            timm.models.divervit.stat['backward']['dispatch_clip_grad'] += time.time() - start_1_2
+            start_1_3 = time.time()
             optimizer.step()
+            timm.models.divervit.stat['backward']['optimizer_step'] += time.time() - start_1_3
+        timm.models.divervit.stat['backward']['total'] += time.time() - start_1
 
         if model_ema is not None:
             model_ema.update(model)
@@ -757,6 +797,7 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix='')
 
     end = time.time()
     last_idx = len(loader) - 1
+    start_1 = time.time()
     with torch.no_grad():
         for batch_idx, (input, target) in enumerate(loader):
             last_batch = batch_idx == last_idx
@@ -767,7 +808,9 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix='')
                 input = input.contiguous(memory_format=torch.channels_last)
 
             with amp_autocast():
+                start_1_1 = time.time()
                 output = model(input)
+                timm.models.divervit.stat['validate']['inference'] += time.time() - start_1_1
             if isinstance(output, (tuple, list)):
                 output = output[0]
 
@@ -807,6 +850,7 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix='')
                         loss=losses_m, top1=top1_m, top5=top5_m))
 
     metrics = OrderedDict([('loss', losses_m.avg), ('top1', top1_m.avg), ('top5', top5_m.avg)])
+    timm.models.divervit.stat['validate']['total'] += time.time() - start_1
 
     return metrics
 
