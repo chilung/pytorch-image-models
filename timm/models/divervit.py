@@ -38,6 +38,7 @@ from .layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_normal_
 from .registry import register_model
 
 _logger = logging.getLogger(__name__)
+stat = {}
 
 
 def _cfg(url='', **kwargs):
@@ -52,32 +53,16 @@ def _cfg(url='', **kwargs):
 
 
 default_cfgs = {
-    'diver_vit_ultra_tiny_patch16_d12_h3_224': _cfg(
+    'divervit_base_patch32_224': _cfg(
         url=''),
-    'diver_vit_ultra_tiny_patch16_d12_h6_224': _cfg(
+    'divervit_base_patch32_384': _cfg(
+        url='',
+        input_size=(3, 384, 384), crop_pct=1.0),
+    'divervit_base_patch16_224': _cfg(
         url=''),
-    'diver_vit_ultra_tiny_patch16_d12_h12_224': _cfg(
-        url=''),
-    'diver_vit_ultra_tiny_patch16_d12_h24_224': _cfg(
-        url=''),
-    'diver_vit_ultra_tiny_patch16_d12_h48_224': _cfg(
-        url=''),
-    'diver_vit_ultra_tiny_patch16_d12_h96_224': _cfg(
-        url=''),
-    'diver_vit_tiny_patch16_d12_h3_224': _cfg(
-        url=''),
-    'diver_vit_tiny_patch16_d12_h6_224': _cfg(
-        url=''),
-    'diver_vit_tiny_patch16_d12_h12_224': _cfg(
-        url=''),
-    'diver_vit_tiny_patch16_d12_h24_224': _cfg(
-        url=''),
-    'diver_vit_tiny_patch16_d12_h48_224': _cfg(
-        url=''),
-    'diver_vit_tiny_patch16_d12_h96_224': _cfg(
-        url=''),
-    'diver_vit_tiny_patch16_d12_h192_224': _cfg(
-        url=''),
+    'divervit_base_patch16_384': _cfg(
+        url='',
+        input_size=(3, 384, 384), crop_pct=1.0),
 }
 
 class DiverAttention(nn.Module):
@@ -457,106 +442,41 @@ base - embedded dimension: 786
 '''
 
 @register_model
-def diver_vit_ultra_tiny_patch16_d12_h3_224(pretrained=False, **kwargs):
-    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
+def divervit_base_patch32_224(pretrained=False, **kwargs):
+    """ ViT-Base (ViT-B/32) from original paper (https://arxiv.org/abs/2010.11929).
+    ImageNet-1k weights fine-tuned from in21k, source https://github.com/google-research/vision_transformer.
     """
-    model_kwargs = dict(patch_size=16, embed_dim=96, depth=12, num_heads=3, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch16_d12_h3_224', pretrained=pretrained, **model_kwargs)
+    model_kwargs = dict(patch_size=32, embed_dim=768, depth=12, num_heads=12, **kwargs)
+    model = _create_divert_vision_transformer('divervit_base_patch32_224', pretrained=pretrained, **model_kwargs)
     return model
 
-@register_model
-def diver_vit_ultra_tiny_patch16_d12_h6_224(pretrained=False, **kwargs):
-    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
-    """
-    model_kwargs = dict(patch_size=16, embed_dim=96, depth=12, num_heads=6, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch16_d12_h6_224', pretrained=pretrained, **model_kwargs)
-    return model
 
 @register_model
-def diver_vit_ultra_tiny_patch16_d12_h12_224(pretrained=False, **kwargs):
-    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
+def divervit_base_patch32_384(pretrained=False, **kwargs):
+    """ ViT-Base model (ViT-B/32) from original paper (https://arxiv.org/abs/2010.11929).
+    ImageNet-1k weights fine-tuned from in21k @ 384x384, source https://github.com/google-research/vision_transformer.
     """
-    model_kwargs = dict(patch_size=16, embed_dim=96, depth=12, num_heads=12, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch16_d12_h12_224', pretrained=pretrained, **model_kwargs)
+    model_kwargs = dict(patch_size=32, embed_dim=768, depth=12, num_heads=12, **kwargs)
+    model = _create_divert_vision_transformer('divervit_base_patch32_384', pretrained=pretrained, **model_kwargs)
     return model
 
-@register_model
-def diver_vit_ultra_tiny_patch16_d12_h24_224(pretrained=False, **kwargs):
-    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
-    """
-    model_kwargs = dict(patch_size=16, embed_dim=96, depth=12, num_heads=24, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch16_d12_h24_224', pretrained=pretrained, **model_kwargs)
-    return model
 
 @register_model
-def diver_vit_ultra_tiny_patch16_d12_h48_224(pretrained=False, **kwargs):
-    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
+def divervit_base_patch16_224(pretrained=False, **kwargs):
+    """ ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
+    ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
     """
-    model_kwargs = dict(patch_size=16, embed_dim=96, depth=12, num_heads=48, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch16_d12_h48_224', pretrained=pretrained, **model_kwargs)
+    model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, **kwargs)
+    model = _create_divert_vision_transformer('divervit_base_patch16_224', pretrained=pretrained, **model_kwargs)
     return model
 
-@register_model
-def diver_vit_ultra_tiny_patch16_d12_h96_224(pretrained=False, **kwargs):
-    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
-    """
-    model_kwargs = dict(patch_size=16, embed_dim=96, depth=12, num_heads=96, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_ultra_tiny_patch16_d12_h96_224', pretrained=pretrained, **model_kwargs)
-    return model
 
 @register_model
-def diver_vit_tiny_patch16_d12_h3_224(pretrained=False, **kwargs):
-    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
+def divervit_base_patch16_384(pretrained=False, **kwargs):
+    """ ViT-Base model (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
+    ImageNet-1k weights fine-tuned from in21k @ 384x384, source https://github.com/google-research/vision_transformer.
     """
-    model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=3, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h3_224', pretrained=pretrained, **model_kwargs)
-    return model
-
-@register_model
-def diver_vit_tiny_patch16_d12_h6_224(pretrained=False, **kwargs):
-    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
-    """
-    model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=6, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h6_224', pretrained=pretrained, **model_kwargs)
-    return model
-
-@register_model
-def diver_vit_tiny_patch16_d12_h12_224(pretrained=False, **kwargs):
-    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
-    """
-    model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=12, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h12_224', pretrained=pretrained, **model_kwargs)
-    return model
-
-@register_model
-def diver_vit_tiny_patch16_d12_h24_224(pretrained=False, **kwargs):
-    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
-    """
-    model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=24, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h24_224', pretrained=pretrained, **model_kwargs)
-    return model
-
-@register_model
-def diver_vit_tiny_patch16_d12_h48_224(pretrained=False, **kwargs):
-    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
-    """
-    model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=48, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h48_224', pretrained=pretrained, **model_kwargs)
-    return model
-
-@register_model
-def diver_vit_tiny_patch16_d12_h96_224(pretrained=False, **kwargs):
-    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
-    """
-    model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=96, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h96_224', pretrained=pretrained, **model_kwargs)
-    return model
-
-@register_model
-def diver_vit_tiny_patch16_d12_h192_224(pretrained=False, **kwargs):
-    """ ViT-Ultra-Tiny (Vit-U-Ti/16)
-    """
-    model_kwargs = dict(patch_size=16, embed_dim=192, depth=12, num_heads=192, **kwargs)
-    model = _create_diver_vision_transformer('diver_vit_tiny_patch16_d12_h192_224', pretrained=pretrained, **model_kwargs)
+    model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, **kwargs)
+    model = _create_divert_vision_transformer('divervit_base_patch16_384', pretrained=pretrained, **model_kwargs)
     return model
 
