@@ -39,7 +39,8 @@ from .registry import register_model
 
 _logger = logging.getLogger(__name__)
 stat = {}
-
+attn_list = {}
+attn_similarity = 0.0
 
 def _cfg(url='', **kwargs):
     return {
@@ -84,6 +85,11 @@ class DiverAttention(nn.Module):
 
         attn = (q @ k.transpose(-2, -1)) * self.scale
         attn = attn.softmax(dim=-1)
+        
+        # keep the attn in the attention map list
+        attn_list['index'] += 1
+        attn_list[attn_list['index']] = attn
+        
         attn = self.attn_drop(attn)
 
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
@@ -224,7 +230,23 @@ class DiverVisionTransformer(nn.Module):
         if self.num_tokens == 2:
             self.head_dist = nn.Linear(self.embed_dim, self.num_classes) if num_classes > 0 else nn.Identity()
 
+    def cal_attn_similaity(self, attn_list, layer_list, cal_type='full conn'):
+        assert cal_type in ['full conn', 'adjacent']
+        assert len(layer_list) == attn_list['index']
+
+        print('layer list: {}, attn index: {}'.format(len(layer_list), attn_list['index']))
+        print('shape of attn list: {}'.format(attn_list[1].shape))
+        
+        B, H, _, _ = attn_list[1].shape
+        for idx in range(1, attn_list['index']+1):
+            attn_list[idx] = attn_list[idx].reshape(B, H, -1)
+        print('shape of attn list: {}'.format(attn_list[1].shape))
+
+        return 1
+    
     def forward_features(self, x):
+        global attn_list, attn_similarity
+        
         x = self.patch_embed(x)
         cls_token = self.cls_token.expand(x.shape[0], -1, -1)  # stole cls_tokens impl from Phil Wang, thanks
         if self.dist_token is None:
@@ -232,7 +254,17 @@ class DiverVisionTransformer(nn.Module):
         else:
             x = torch.cat((cls_token, self.dist_token.expand(x.shape[0], -1, -1), x), dim=1)
         x = self.pos_drop(x + self.pos_embed)
+        
+        # reset attention map list for each input x
+        attn_list['index'] = 0
+        
         x = self.blocks(x)
+
+        # check attention map list
+        # print('depth of layer: {}, attention map: {}'.format(attn_list['index'], attn_list))
+        layer_list = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        attn_similarity = self.cal_attn_similaity(attn_list, layer_list, 'full conn')
+        
         x = self.norm(x)
         if self.dist_token is None:
             return self.pre_logits(x[:, 0])
@@ -240,7 +272,7 @@ class DiverVisionTransformer(nn.Module):
             return x[:, 0], x[:, 1]
 
     def forward(self, x):
-        x = self.forward_features(x)
+        x = self.forward_features(x)        
         if self.head_dist is not None:
             x, x_dist = self.head(x[0]), self.head_dist(x[1])  # x must be a tuple
             if self.training and not torch.jit.is_scripting():
