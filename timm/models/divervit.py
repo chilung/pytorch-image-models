@@ -230,15 +230,15 @@ class DiverVisionTransformer(nn.Module):
         if self.num_tokens == 2:
             self.head_dist = nn.Linear(self.embed_dim, self.num_classes) if num_classes > 0 else nn.Identity()
 
-    def cal_attn_similaity(self, attn_list, layer_list, cal_type='full conn'):
+    def cal_attn_similaity(self, attn_list, layer_mask, cal_type='full conn'):
         assert cal_type in ['full conn', 'adjacent']
-        assert len(layer_list) == attn_list['index']
+        assert len(layer_mask) == attn_list['index']
 
         print('layer list: {}, attn index: {}'.format(len(layer_list), attn_list['index']))
         print('shape of attn list: {}'.format(attn_list[1].shape))
         
         B, H, _, _ = attn_list[1].shape
-        for idx in range(1, attn_list['index']+1):
+        for idx in range(attn_list['index']):
             attn_list[idx] = attn_list[idx].reshape(B, H, -1)
         print('shape of attn list: {}'.format(attn_list[1].shape))
 
@@ -256,14 +256,14 @@ class DiverVisionTransformer(nn.Module):
         x = self.pos_drop(x + self.pos_embed)
         
         # reset attention map list for each input x
-        attn_list['index'] = 0
+        attn_list['index'] = -1
         
         x = self.blocks(x)
 
         # check attention map list
         # print('depth of layer: {}, attention map: {}'.format(attn_list['index'], attn_list))
-        layer_list = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-        attn_similarity = self.cal_attn_similaity(attn_list, layer_list, 'full conn')
+        layer_mask = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        attn_similarity = self.cal_attn_similaity(attn_list, layer_mask, 'full conn')
         
         x = self.norm(x)
         if self.dist_token is None:
