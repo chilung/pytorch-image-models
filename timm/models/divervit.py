@@ -37,10 +37,27 @@ from .helpers import build_model_with_cfg, named_apply, adapt_input_conv
 from .layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_normal_
 from .registry import register_model
 
+from sklearn.metrics.pairwise import cosine_similarity
+
 _logger = logging.getLogger(__name__)
 stat = {}
 attn_list = {}
 attn_similarity = 0.0
+
+mask_12_step1 = [1, 1, 1, 1,
+                 1, 1, 1, 1,
+                 1, 1, 1, 1,]
+mask_12_step4 = [1, 0, 0, 0,
+                 1, 0, 0, 0,
+                 1, 0, 0, 0,]
+mask_16_step1 = [1, 1, 1, 1,
+                 1, 1, 1, 1,
+                 1, 1, 1, 1,
+                 1, 1, 1, 1,]
+mask_16_step4 = [1, 0, 0, 0,
+                 1, 0, 0, 0,
+                 1, 0, 0, 0,
+                 1, 0, 0, 0,]
 
 def _cfg(url='', **kwargs):
     return {
@@ -60,7 +77,13 @@ default_cfgs = {
         url='',
         input_size=(3, 384, 384), crop_pct=1.0),
     'divervit_base_patch16_224': _cfg(
-        url=''),
+        url='', layer_mask=mask_12_step1, cal_type='full conn'),
+    'divervit_base_patch16_224_mod4': _cfg(
+        url='', layer_mask=mask_12_step4, cal_type='full conn'),
+    'divervit_base_patch16_224_adjacent': _cfg(
+        url='', layer_mask=mask_12_step1, cal_type='adjacent'),
+    'divervit_base_patch16_224_adjacent_mod4': _cfg(
+        url='', layer_mask=mask_12_step4, cal_type='adjacent'),
     'divervit_base_patch16_384': _cfg(
         url='',
         input_size=(3, 384, 384), crop_pct=1.0),
@@ -130,7 +153,7 @@ class DiverVisionTransformer(nn.Module):
     def __init__(self, img_size=224, patch_size=16, in_chans=3, num_classes=1000, embed_dim=768, depth=12,
                  num_heads=12, mlp_ratio=4., qkv_bias=True, representation_size=None, distilled=False,
                  drop_rate=0., attn_drop_rate=0., drop_path_rate=0., embed_layer=PatchEmbed, norm_layer=None,
-                 act_layer=None, weight_init=''):
+                 act_layer=None, weight_init='', layer_mask=[], cal_type='full conn'):
         """
         Args:
             img_size (int, tuple): input image size
@@ -152,6 +175,10 @@ class DiverVisionTransformer(nn.Module):
             weight_init: (str): weight init scheme
         """
         super().__init__()
+        # old_i for calculate similarity only
+        self.old_i = -1
+        self.layer_mask = layer_mask
+        self.cal_type = cal_type
         self.num_classes = num_classes
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
         self.num_tokens = 2 if distilled else 1
@@ -230,19 +257,52 @@ class DiverVisionTransformer(nn.Module):
         if self.num_tokens == 2:
             self.head_dist = nn.Linear(self.embed_dim, self.num_classes) if num_classes > 0 else nn.Identity()
 
+    def single_out(self, i, j):
+        global old_i
+        if self.old_i != i:
+            self.old_i = i
+            return [i, j]
+        else:
+            return
+           
     def cal_attn_similaity(self, attn_list, layer_mask, cal_type='full conn'):
-        assert cal_type in ['full conn', 'adjacent']
-        assert len(layer_mask) == attn_list['index']
-
-        print('layer list: {}, attn index: {}'.format(len(layer_list), attn_list['index']))
-        print('shape of attn list: {}'.format(attn_list[1].shape))
+        # print('layer mask: {}, attn index: {}, cal_type: {}'.format(len(layer_mask), attn_list['index'], cal_type))
+        # print('shape of attn list: {}'.format(attn_list[1].shape))
         
-        B, H, _, _ = attn_list[1].shape
-        for idx in range(attn_list['index']):
-            attn_list[idx] = attn_list[idx].reshape(B, H, -1)
-        print('shape of attn list: {}'.format(attn_list[1].shape))
+        layer_depth = attn_list['index'] + 1
+        assert len(layer_mask) == layer_depth 
+        assert cal_type in ['full conn', 'adjacent']
 
-        return 1
+        B, H, _, _ = attn_list[1].shape
+        for idx in range(layer_depth):
+            attn_list[idx] = attn_list[idx].reshape(B, H, -1)
+        # print('shape of attn list: {}'.format(attn_list[1].shape))
+
+        # cal_list = [[attn_list[i], attn_list[j]] for i in range(layer_depth-1) if layer_mask[i]==1
+        #             for j in range(i+1, layer_depth) if layer_mask[j]==1]
+        cal_list = [[i, j] for i in range(layer_depth-1) if layer_mask[i]==1
+                    for j in range(i+1, layer_depth) if layer_mask[j]==1]
+        if cal_type == 'adjacent':
+            cal_list = [self.single_out(i, j) for i, j in cal_list]
+            cal_list = [item for item in cal_list if item!=None]
+        # print(cal_list)
+
+        cos = torch.nn.CosineSimilarity(dim=-1, eps=1e-6)
+        if attn_list[1].is_cuda:
+            print('attn_list in CUDA')
+        else:
+            print('attn_list in CPU')
+        cos_sim = torch.tensor([cos(attn_list[layer_i][batch_idx][head_i], attn_list[layer_j][batch_idx][head_j])
+                             for batch_idx in range(B)
+                             for layer_i, layer_j in cal_list
+                             for head_i in range(H)
+                             for head_j in range(H)])
+        if cos_sim.is_cuda:
+            print('cos_sim in CUDA')
+        else:
+            print('cos_sim in CPU')
+        cos_sim = torch.sum(cos_sim) / len(cos_sim)
+        return cos_sim
     
     def forward_features(self, x):
         global attn_list, attn_similarity
@@ -262,8 +322,7 @@ class DiverVisionTransformer(nn.Module):
 
         # check attention map list
         # print('depth of layer: {}, attention map: {}'.format(attn_list['index'], attn_list))
-        layer_mask = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-        attn_similarity = self.cal_attn_similaity(attn_list, layer_mask, 'full conn')
+        attn_similarity = self.cal_attn_similaity(attn_list=attn_list, layer_mask=self.layer_mask, cal_type=self.cal_type)
         
         x = self.norm(x)
         if self.dist_token is None:
@@ -498,8 +557,38 @@ def divervit_base_patch16_224(pretrained=False, **kwargs):
     """ ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
     """
-    model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, **kwargs)
+    model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, layer_mask=mask_12_step1, cal_type='full conn', **kwargs)
     model = _create_divert_vision_transformer('divervit_base_patch16_224', pretrained=pretrained, **model_kwargs)
+    return model
+
+
+@register_model
+def divervit_base_patch16_224_mod4(pretrained=False, **kwargs):
+    """ ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
+    ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
+    """
+    model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, layer_mask=mask_12_step4, cal_type='full conn', **kwargs)
+    model = _create_divert_vision_transformer('divervit_base_patch16_224_mod4', pretrained=pretrained, **model_kwargs)
+    return model
+
+
+@register_model
+def divervit_base_patch16_224_adjacent(pretrained=False, **kwargs):
+    """ ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
+    ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
+    """
+    model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, layer_mask=mask_12_step1, cal_type='adjacent', **kwargs)
+    model = _create_divert_vision_transformer('divervit_base_patch16_224_adjacent', pretrained=pretrained, **model_kwargs)
+    return model
+
+
+@register_model
+def divervit_base_patch16_224_adjacent_mod4(pretrained=False, **kwargs):
+    """ ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
+    ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
+    """
+    model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, layer_mask=mask_12_step4, cal_type='adjacent', **kwargs)
+    model = _create_divert_vision_transformer('divervit_base_patch16_224_adjacent_mod4', pretrained=pretrained, **model_kwargs)
     return model
 
 
