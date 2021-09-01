@@ -274,13 +274,22 @@ class DiverVisionTransformer(nn.Module):
         assert len(layer_mask) == layer_depth 
         assert cal_type in ['full conn', 'adjacent']
 
-        B, H, _, _ = attn_list[1].shape
+        # print('shape of attn list: {}'.format(attn_list[1].shape))
+        B, H, M, N = attn_list[1].shape
         # for idx in range(layer_depth):
         #     attn_list[idx] = attn_list[idx].reshape(B, H, -1)
-        # print('shape of attn list: {}'.format(attn_list[1].shape))
+        attn_tensor = torch.zeros([layer_depth, B, H, M*N]).cuda()
+        if attn_tensor.is_cuda:
+            print('attn_tensor1 in CUDA')
+        else:
+            print('attn_tensor1 in CPU')
+        for idx in range(layer_depth):
+            attn_tensor[idx] = attn_list[idx].reshape(B, H, -1)
+        if attn_tensor.is_cuda:
+            print('attn_tensor2 in CUDA')
+        else:
+            print('attn_tensor2 in CPU')
 
-        # cal_list = [[attn_list[i], attn_list[j]] for i in range(layer_depth-1) if layer_mask[i]==1
-        #             for j in range(i+1, layer_depth) if layer_mask[j]==1]
         cal_list = [[i, j] for i in range(layer_depth-1) if layer_mask[i]==1
                     for j in range(i+1, layer_depth) if layer_mask[j]==1]
         if cal_type == 'adjacent':
@@ -289,14 +298,10 @@ class DiverVisionTransformer(nn.Module):
         # print(cal_list)
 
         cos = torch.nn.CosineSimilarity(dim=-1, eps=1e-6)
-        if attn_list[1].is_cuda:
-            print('attn_list in CUDA')
-        else:
-            print('attn_list in CPU')
-        cos_sim = torch.tensor([cos(attn_list[layer_i][batch_idx][head_i].flatten(),
-                                    attn_list[layer_j][batch_idx][head_j].flatten())
-                             for batch_idx in range(B)
+        cos_sim = torch.tensor([cos(attn_tensor[layer_i][batch_idx][head_i],
+                                    attn_tensor[layer_j][batch_idx][head_j])
                              for layer_i, layer_j in cal_list
+                             for batch_idx in range(B)
                              for head_i in range(H)
                              for head_j in range(H)]).cuda()
         if cos_sim.is_cuda:
