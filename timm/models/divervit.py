@@ -31,6 +31,7 @@ from copy import deepcopy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy
 
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, IMAGENET_INCEPTION_MEAN, IMAGENET_INCEPTION_STD
 from .helpers import build_model_with_cfg, named_apply, adapt_input_conv
@@ -274,8 +275,8 @@ class DiverVisionTransformer(nn.Module):
         assert cal_type in ['full conn', 'adjacent']
 
         B, H, _, _ = attn_list[1].shape
-        for idx in range(layer_depth):
-            attn_list[idx] = attn_list[idx].reshape(B, H, -1)
+        # for idx in range(layer_depth):
+        #     attn_list[idx] = attn_list[idx].reshape(B, H, -1)
         # print('shape of attn list: {}'.format(attn_list[1].shape))
 
         # cal_list = [[attn_list[i], attn_list[j]] for i in range(layer_depth-1) if layer_mask[i]==1
@@ -292,11 +293,12 @@ class DiverVisionTransformer(nn.Module):
             print('attn_list in CUDA')
         else:
             print('attn_list in CPU')
-        cos_sim = torch.tensor([cos(attn_list[layer_i][batch_idx][head_i], attn_list[layer_j][batch_idx][head_j])
+        cos_sim = torch.tensor([cos(attn_list[layer_i][batch_idx][head_i].flatten(),
+                                    attn_list[layer_j][batch_idx][head_j].flatten())
                              for batch_idx in range(B)
                              for layer_i, layer_j in cal_list
                              for head_i in range(H)
-                             for head_j in range(H)])
+                             for head_j in range(H)]).cuda()
         if cos_sim.is_cuda:
             print('cos_sim in CUDA')
         else:
