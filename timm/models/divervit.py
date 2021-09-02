@@ -298,17 +298,26 @@ class DiverVisionTransformer(nn.Module):
         # print(cal_list)
 
         cos = torch.nn.CosineSimilarity(dim=-1, eps=1e-6)
-        cos_sim = torch.tensor([cos(attn_tensor[layer_i][batch_idx][head_i],
-                                    attn_tensor[layer_j][batch_idx][head_j])
-                             for layer_i, layer_j in cal_list
-                             for batch_idx in range(B)
-                             for head_i in range(H)
-                             for head_j in range(H)]).cuda()
+        # cos_sim = torch.tensor([cos(attn_tensor[layer_i][batch_idx][head_i],
+        #                             attn_tensor[layer_j][batch_idx][head_j])
+        #                      for layer_i, layer_j in cal_list
+        #                      for batch_idx in range(B)
+        #                      for head_i in range(H)
+        #                      for head_j in range(H)]).cuda()
+        cos_sim = torch.tensor([[[[cos(attn_tensor[layer_i][batch_idx][head_i], attn_tensor[layer_j][batch_idx][head_j])
+                             for head_j in range(H)]
+                             for head_i in range(H)]
+                             for batch_idx in range(B)]
+                             for layer_i, layer_j in cal_list]).cuda()
+        # print(cos_sim)
+        cos_sim, cos_sim_max_indices = torch.max(cos_sim, dim=-2)
+        # print(cos_sim, cos_sim_max_indices)
         if cos_sim.is_cuda:
             print('cos_sim in CUDA')
         else:
             print('cos_sim in CPU')
-        cos_sim = torch.sum(cos_sim) / len(cos_sim)
+        cos_sim = torch.mean(cos_sim)
+        # print('cos_sim mean: {}'.format(cos_sim))
         return cos_sim
     
     def forward_features(self, x):
