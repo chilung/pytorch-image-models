@@ -701,7 +701,7 @@ def train_one_epoch(
             loss = loss_fn(output, target)
         
         print('original loss: {}, similarity: {}'.format(loss, timm.models.divervit.attn_similarity))
-        loss = loss + 10 * timm.models.divervit.attn_similarity
+        # loss = loss + 10 * timm.models.divervit.attn_similarity
         timm.models.divervit.stat['train']['forward'] += time.time() - start
 
         if not args.distributed:
