@@ -1,4 +1,5 @@
 # Install local timm version
+[goto timm directory]
 pip install -e .
 ### Vision Trenaformer
 1. How to train your ViT? Data, Augmentation, and Regularization in Vision Transformers
